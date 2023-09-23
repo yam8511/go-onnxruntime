@@ -95,3 +95,7 @@ func main() {
 	}
 }
 ```
+
+## Example
+
+- [Inference YOLOv8 Object Detection](https://github.com/yam8511/go-onnxruntime-example)
