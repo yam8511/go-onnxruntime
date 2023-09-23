@@ -31,8 +31,8 @@ func New_ORT_SDK(dllNames ...string) (*ORT_SDK, error) {
 	return sdk, nil
 }
 
-func New_ORT_SDK_WithLoggingLevel(level OrtLoggingLevel, _ ...string) (*ORT_SDK, error) {
-	sdk, err := newOrtApi()
+func New_ORT_SDK_WithLoggingLevel(level OrtLoggingLevel, dllNames ...string) (*ORT_SDK, error) {
+	sdk, err := newOrtApi(dllNames...)
 	if err != nil {
 		return nil, err
 	}
