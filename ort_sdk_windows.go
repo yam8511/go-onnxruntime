@@ -20,20 +20,16 @@ type ORT_SDK struct {
 	_ApiBase *OrtApiBase
 	_Api     *OrtApi
 	_Env     *OrtEnv
+	_version uint32
 }
 
-func newOrtApi(dllNames ...string) (*ORT_SDK, error) {
-	dllName := "onnxruntime.dll"
-	for _, v := range dllNames {
-		dllName = v
-	}
-
-	dll, err := syscall.LoadLibrary(dllName)
+func newOrtApi(opts OrtSdkOption) (*ORT_SDK, error) {
+	dll, err := syscall.LoadLibrary(opts.WinDLL_Name)
 	if err != nil {
 		return nil, err
 	}
 
-	sdk := &ORT_SDK{_DLL: dll}
+	sdk := &ORT_SDK{_DLL: dll, _version: opts.Version}
 	getApiBaseProc, e := syscall.GetProcAddress(dll, "OrtGetApiBase")
 	if e != nil {
 		sdk.Release()
@@ -52,7 +48,7 @@ func newOrtApi(dllNames ...string) (*ORT_SDK, error) {
 	sdk._ApiBase = (*OrtApiBase)(unsafe.Pointer(ortApiBase))
 
 	// Initialize Ort API
-	sdk._Api = C.GetApi(sdk._ApiBase)
+	sdk._Api = C.GetApi(sdk._ApiBase, C.uint32_t(opts.Version))
 	if sdk._Api == nil {
 		sdk.Release()
 		return nil, fmt.Errorf("%w: no Ort API return", ErrExportOrtSdk)

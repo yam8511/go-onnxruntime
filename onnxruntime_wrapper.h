@@ -24,8 +24,8 @@ extern "C"
 #endif
 
     /* #region OrtApi */
+    const OrtApi *GetApi(OrtApiBase *api_base, uint32_t version);
     const char *GetVersionString(OrtApiBase *api_base);
-    const OrtApi *GetApi(OrtApiBase *api_base);
     /* #endregion */
 
     /* #region OrtEnv Operation */

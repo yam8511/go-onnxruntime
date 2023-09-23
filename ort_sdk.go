@@ -10,29 +10,31 @@ import (
 	"unsafe"
 )
 
-func New_ORT_SDK(dllNames ...string) (*ORT_SDK, error) {
-	sdk, err := newOrtApi(dllNames...)
-	if err != nil {
-		return nil, err
-	}
-
-	envName := C.CString("go-ort environment")
-	defer C.free(unsafe.Pointer(envName))
-
-	status := C.CreateOrtEnv(sdk._Api, envName, &sdk._Env)
-	if status != nil {
-		sdk.Release()
-		return nil, fmt.Errorf(
-			"%w: creating ORT environment: %w",
-			ErrExportOrtSdk, sdk.CheckAndReleaseStatus(status),
-		)
-	}
-
-	return sdk, nil
+type OrtSdkOption struct {
+	WinDLL_Name  string
+	Version      uint32
+	LoggingLevel OrtLoggingLevel
 }
 
-func New_ORT_SDK_WithLoggingLevel(level OrtLoggingLevel, dllNames ...string) (*ORT_SDK, error) {
-	sdk, err := newOrtApi(dllNames...)
+type OrtSdkArgsF func(opt *OrtSdkOption)
+
+func withOption(args ...OrtSdkArgsF) *OrtSdkOption {
+	opts := OrtSdkOption{
+		WinDLL_Name:  "onnxruntime.dll",
+		Version:      ORT_API_VERSION,
+		LoggingLevel: ORT_LOGGING_LEVEL_WARNING,
+	}
+	for _, f := range args {
+		if f != nil {
+			f(&opts)
+		}
+	}
+	return &opts
+}
+
+func New_ORT_SDK(args ...OrtSdkArgsF) (*ORT_SDK, error) {
+	opts := withOption(args...)
+	sdk, err := newOrtApi(*opts)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +42,11 @@ func New_ORT_SDK_WithLoggingLevel(level OrtLoggingLevel, dllNames ...string) (*O
 	envName := C.CString("go-ort environment")
 	defer C.free(unsafe.Pointer(envName))
 
-	status := C.CreateOrtEnvWithOrtLoggingLevel(sdk._Api, C.OrtLoggingLevel(level), envName, &sdk._Env)
+	status := C.CreateOrtEnvWithOrtLoggingLevel(
+		sdk._Api,
+		C.OrtLoggingLevel(opts.LoggingLevel),
+		envName, &sdk._Env,
+	)
 	if status != nil {
 		sdk.Release()
 		return nil, fmt.Errorf(
@@ -53,9 +59,7 @@ func New_ORT_SDK_WithLoggingLevel(level OrtLoggingLevel, dllNames ...string) (*O
 }
 
 // Onnxruntime API版本
-func (ort *ORT_SDK) ORT_API_VERSION() int {
-	return ORT_API_VERSION
-}
+func (ort *ORT_SDK) ORT_API_VERSION() uint32 { return ort._version }
 
 // Onnxruntime 版本字串
 //

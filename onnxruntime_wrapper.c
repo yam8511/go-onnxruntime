@@ -2,7 +2,7 @@
 
 /* #region OrtApi */
 
-const OrtApi *GetApi(OrtApiBase *api_base) { return api_base->GetApi(ORT_API_VERSION); }
+const OrtApi *GetApi(OrtApiBase *api_base, uint32_t version) { return api_base->GetApi(version); }
 const char *GetVersionString(OrtApiBase *api_base) { return api_base->GetVersionString(); }
 
 /* #endregion */

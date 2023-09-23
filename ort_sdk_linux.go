@@ -13,12 +13,13 @@ type ORT_SDK struct {
 	_ApiBase *OrtApiBase
 	_Api     *OrtApi
 	_Env     *OrtEnv
+	_version uint32
 }
 
-func newOrtApi(...string) (*ORT_SDK, error) {
-	sdk := &ORT_SDK{}
+func newOrtApi(opts OrtSdkOption) (*ORT_SDK, error) {
+	sdk := &ORT_SDK{_version: opts.Version}
 	sdk._ApiBase = C.OrtGetApiBase()
-	sdk._Api = C.GetApi(sdk._ApiBase)
+	sdk._Api = C.GetApi(sdk._ApiBase, C.uint32_t(opts.Version))
 	return sdk, nil
 }
 
