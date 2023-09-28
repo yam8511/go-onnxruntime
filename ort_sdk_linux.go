@@ -10,10 +10,12 @@ package ort
 import "C"
 
 type ORT_SDK struct {
-	_ApiBase *OrtApiBase
-	_Api     *OrtApi
-	_Env     *OrtEnv
-	_version uint32
+	_ApiBase       *OrtApiBase
+	_Api           *OrtApi
+	_Env           *OrtEnv
+	_AllocatorPtr  *OrtAllocator
+	_MemoryInfoPrt *OrtMemoryInfo
+	_version       uint32
 }
 
 func newOrtApi(opts OrtSdkOption) (*ORT_SDK, error) {
@@ -24,6 +26,10 @@ func newOrtApi(opts OrtSdkOption) (*ORT_SDK, error) {
 }
 
 func (ort *ORT_SDK) Release() {
+	if ort._MemoryInfoPrt != nil {
+		ort.ReleaseMemoryInfo(ort._MemoryInfoPrt)
+	}
+
 	if ort._Env != nil {
 		ort.ReleaseEnv(ort._Env)
 	}

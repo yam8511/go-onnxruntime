@@ -55,6 +55,22 @@ func New_ORT_SDK(args ...OrtSdkArgsF) (*ORT_SDK, error) {
 		)
 	}
 
+	{ // 取得預設的Allocator
+		sdk._AllocatorPtr, err = sdk.GetAllocatorWithDefaultOptions()
+		if err != nil {
+			sdk.Release()
+			return nil, err
+		}
+	}
+
+	{ // 建立 MemoryInfo
+		sdk._MemoryInfoPrt, err = sdk.CreateCpuMemoryInfo()
+		if err != nil {
+			sdk.Release()
+			return nil, err
+		}
+	}
+
 	return sdk, nil
 }
 
@@ -495,7 +511,7 @@ func NewTensor[T TensorData](session *Session, s Shape, data []T) (*Tensor[T], e
 	dataSize := unsafe.Sizeof(data[0]) * uintptr(elementCount)
 
 	status := C.CreateTensorWithDataAsOrtValue(
-		session.sdk._Api, session.mem_ptr,
+		session.sdk._Api, session.sdk._MemoryInfoPrt,
 		unsafe.Pointer(&data[0]),
 		C.size_t(dataSize), (*C.int64_t)(unsafe.Pointer(&s[0])),
 		C.size_t(len(s)), C.ONNXTensorElementDataType(dataType), &ortValue,
@@ -519,8 +535,8 @@ func NewTensor[T TensorData](session *Session, s Shape, data []T) (*Tensor[T], e
 func NewInputTensor[T TensorData](session *Session, name string, data []T) (*Tensor[T], error) {
 	var s Shape
 	for _, v := range session.inputs {
-		if v.name == name || name == "" {
-			s = v.dimensions
+		if v.Name == name || name == "" {
+			s = v.Shape
 			break
 		}
 	}
@@ -530,8 +546,8 @@ func NewInputTensor[T TensorData](session *Session, name string, data []T) (*Ten
 func NewEmptyOutputTensor[T TensorData](session *Session, name string) (*Tensor[T], error) {
 	var s Shape
 	for _, v := range session.outputs {
-		if v.name == name || name == "" {
-			s = v.dimensions
+		if v.Name == name || name == "" {
+			s = v.Shape
 			break
 		}
 	}

@@ -16,11 +16,13 @@ import (
 )
 
 type ORT_SDK struct {
-	_DLL     syscall.Handle
-	_ApiBase *OrtApiBase
-	_Api     *OrtApi
-	_Env     *OrtEnv
-	_version uint32
+	_DLL           syscall.Handle
+	_ApiBase       *OrtApiBase
+	_Api           *OrtApi
+	_Env           *OrtEnv
+	_AllocatorPtr  *OrtAllocator
+	_MemoryInfoPrt *OrtMemoryInfo
+	_version       uint32
 }
 
 func newOrtApi(opts OrtSdkOption) (*ORT_SDK, error) {
@@ -59,8 +61,16 @@ func newOrtApi(opts OrtSdkOption) (*ORT_SDK, error) {
 
 // Release SDK resource
 func (ort *ORT_SDK) Release() {
+	if ort._MemoryInfoPrt != nil {
+		fmt.Println("ReleaseMemoryInfo")
+		ort.ReleaseMemoryInfo(ort._MemoryInfoPrt)
+		fmt.Println("ReleaseMemoryInfo2")
+	}
+
 	if ort._Env != nil {
+		fmt.Println("ReleaseEnv")
 		ort.ReleaseEnv(ort._Env)
+		fmt.Println("ReleaseEnv2")
 	}
 	syscall.FreeLibrary(ort._DLL)
 }

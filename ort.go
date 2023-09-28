@@ -6,36 +6,36 @@ import (
 )
 
 type Input struct {
-	name       string                    // Name of the input layer
-	input_type ONNXTensorElementDataType // Type of the input layer's elements
-	dimensions Shape                     // Shape of the input layer
+	Name     string                    // Name of the input layer
+	DataType ONNXTensorElementDataType // Type of the input layer's elements
+	Shape    Shape                     // Shape of the input layer
 }
 
 func (input Input) String() string {
 	return fmt.Sprintf(
-		"input: name: %s, data type = %s, dim: %v\n",
-		input.name, input.input_type, input.dimensions,
+		"input: name: %s, data type = %s, shape: %v\n",
+		input.Name, input.DataType, input.Shape,
 	)
 }
 
 type Output struct {
-	name        string                    // Name of the input layer
-	output_type ONNXTensorElementDataType // Type of the output layer's elements
-	dimensions  Shape                     // Shape of the output layer
+	Name     string                    // Name of the input layer
+	DataType ONNXTensorElementDataType // Type of the output layer's elements
+	Shape    Shape                     // Shape of the output layer
 }
 
 func (output Output) String() string {
 	return fmt.Sprintf(
-		"output: name: %s, data type = %s, dim: %v\n",
-		output.name, output.output_type, output.dimensions,
+		"output: name: %s, data type = %s, shape: %v\n",
+		output.Name, output.DataType, output.Shape,
 	)
 }
 
 type Session struct {
-	sdk           *ORT_SDK
-	session_ptr   *OrtSession
-	allocator_ptr *OrtAllocator
-	mem_ptr       *OrtMemoryInfo
+	sdk         *ORT_SDK
+	session_ptr *OrtSession
+	// allocator_ptr *OrtAllocator
+	// mem_ptr       *OrtMemoryInfo
 	inputs        []Input  // ONNX's inputs
 	outputs       []Output // ONNX's outputs
 	inputsTensor  []*OrtValue
@@ -85,22 +85,6 @@ func NewSessionWithONNX(sdk *ORT_SDK, onnxFile string, useGPU bool) (*Session, e
 		}
 	}
 
-	{ // 建立 Allocator
-		session.allocator_ptr, err = sdk.GetAllocatorWithDefaultOptions()
-		if err != nil {
-			defer session.Release()
-			return nil, err
-		}
-	}
-
-	{ // 建立 MemoryInfo
-		session.mem_ptr, err = sdk.CreateCpuMemoryInfo()
-		if err != nil {
-			defer session.Release()
-			return nil, err
-		}
-	}
-
 	{ // 撈取 inputs
 		count, err := sdk.SessionGetInputCount(session.session_ptr)
 		if err != nil {
@@ -110,7 +94,8 @@ func NewSessionWithONNX(sdk *ORT_SDK, onnxFile string, useGPU bool) (*Session, e
 		session.inputs = []Input{}
 		for i := 0; i < count; i++ {
 			err := func() error {
-				name, err := sdk.SessionGetInputName(session.session_ptr, i, session.allocator_ptr)
+				name, err := sdk.SessionGetInputName(session.session_ptr, i, sdk._AllocatorPtr)
+				// name, err := sdk.SessionGetInputName(session.session_ptr, i, session.allocator_ptr)
 				if err != nil {
 					return err
 				}
@@ -141,9 +126,9 @@ func NewSessionWithONNX(sdk *ORT_SDK, onnxFile string, useGPU bool) (*Session, e
 				}
 
 				session.inputs = append(session.inputs, Input{
-					name:       name,
-					input_type: dataType,
-					dimensions: NewShape(n...),
+					Name:     name,
+					DataType: dataType,
+					Shape:    NewShape(n...),
 				})
 				return nil
 			}()
@@ -162,7 +147,8 @@ func NewSessionWithONNX(sdk *ORT_SDK, onnxFile string, useGPU bool) (*Session, e
 		session.outputs = []Output{}
 		for i := 0; i < count; i++ {
 			err := func() error {
-				name, err := sdk.SessionGetOutputName(session.session_ptr, i, session.allocator_ptr)
+				name, err := sdk.SessionGetOutputName(session.session_ptr, i, sdk._AllocatorPtr)
+				// name, err := sdk.SessionGetOutputName(session.session_ptr, i, session.allocator_ptr)
 				if err != nil {
 					return err
 				}
@@ -193,9 +179,9 @@ func NewSessionWithONNX(sdk *ORT_SDK, onnxFile string, useGPU bool) (*Session, e
 				}
 
 				session.outputs = append(session.outputs, Output{
-					name:        name,
-					output_type: dataType,
-					dimensions:  NewShape(n...),
+					Name:     name,
+					DataType: dataType,
+					Shape:    NewShape(n...),
 				})
 				return nil
 			}()
@@ -208,28 +194,46 @@ func NewSessionWithONNX(sdk *ORT_SDK, onnxFile string, useGPU bool) (*Session, e
 	return session, nil
 }
 
+func (sess *Session) Outputs() []Output {
+	return sess.outputs
+}
+
+func (sess *Session) Inputs() []Input {
+	return sess.inputs
+}
+
+func (sess *Session) Output(name string) (Output, bool) {
+	for _, v := range sess.outputs {
+		if v.Name == name {
+			return v, true
+		}
+	}
+	return Output{}, false
+}
+
+func (sess *Session) Input(name string) (Input, bool) {
+	for _, v := range sess.inputs {
+		if v.Name == name {
+			return v, true
+		}
+	}
+	return Input{}, false
+}
+
 func (sess *Session) RunDefault(
 	inputData []AnyTensor,
 	outputData []AnyTensor,
 ) error {
 	inputNames := []string{}
 	for i := range inputData {
-		if i < len(sess.inputs) {
-			inputInfo := sess.inputs[i]
-			inputNames = append(inputNames, inputInfo.name)
-		} else {
-			return ErrBindingLengthNotEqual
-		}
+		inputInfo := sess.inputs[i]
+		inputNames = append(inputNames, inputInfo.Name)
 	}
 
 	outputNames := []string{}
 	for i := range outputData {
-		if i < len(sess.outputs) {
-			outputInfo := sess.outputs[i]
-			outputNames = append(outputNames, outputInfo.name)
-		} else {
-			return ErrBindingLengthNotEqual
-		}
+		outputInfo := sess.outputs[i]
+		outputNames = append(outputNames, outputInfo.Name)
 	}
 
 	return sess.Run(inputNames, inputData, outputNames, outputData)
@@ -273,18 +277,6 @@ func (sess *Session) RunBinding(inputData map[string]AnyTensor, outputData map[s
 
 func (sess *Session) Release() {
 	if sess.session_ptr != nil {
-		fmt.Println("ReleaseSession")
 		sess.sdk.ReleaseSession(sess.session_ptr)
-		fmt.Println("ReleaseSession")
-	}
-	if sess.allocator_ptr != nil {
-		fmt.Println("ReleaseAllocator")
-		sess.sdk.ReleaseAllocator(sess.allocator_ptr)
-		fmt.Println("ReleaseAllocator2")
-	}
-	if sess.mem_ptr != nil {
-		fmt.Println("ReleaseMemoryInfo")
-		sess.sdk.ReleaseMemoryInfo(sess.mem_ptr)
-		fmt.Println("ReleaseMemoryInfo2")
 	}
 }
