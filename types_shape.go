@@ -8,6 +8,14 @@ func NewShape(dimensions ...int64) Shape {
 	return Shape(dimensions)
 }
 
+func (s Shape) Sizes() []int {
+	sizes := []int{}
+	for _, v := range s {
+		sizes = append(sizes, int(v))
+	}
+	return sizes
+}
+
 func (s Shape) FlattenedSize() int64 {
 	if len(s) == 0 {
 		return 0

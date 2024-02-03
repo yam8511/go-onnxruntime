@@ -386,6 +386,21 @@ OrtStatus *CreateTensorWithDataAsOrtValue(
   return ort_api->CreateTensorWithDataAsOrtValue(info, p_data, p_data_len, shape, shape_len, type, out);
 }
 
+/** \brief Get a pointer to the raw data inside a tensor
+ *
+ * Used to read/write/modify the internal tensor data directly.
+ * \note The returned pointer is valid until the \p value is destroyed.
+ *
+ * \param[in] value A tensor type (string tensors are not supported)
+ * \param[out] out Filled in with a pointer to the internal storage
+ *
+ * \snippet{doc} snippets.dox OrtStatus Return Value
+ */
+OrtStatus *GetTensorMutableData(OrtApi *ort_api, OrtValue *value, void **out)
+{
+  return ort_api->GetTensorMutableData(value, out);
+}
+
 /** \brief Run the model in an ::OrtSession
  *
  * Will not return until the model run has completed. Multiple threads might be used to run the model based on

@@ -452,6 +452,15 @@ func (t *Tensor[_]) Destroy() error {
 // the slice can be read or written to get or set the tensor's contents.
 func (t *Tensor[T]) GetData() []T { return t.data }
 
+func (t *Tensor[T]) GetTensorMutableData() (unsafe.Pointer, error) {
+	ptr := unsafe.Pointer(C.NULL) // void*
+	status := C.GetTensorMutableData(t.session.sdk._Api, t.ortValue, &ptr)
+	if status != nil {
+		return ptr, t.session.sdk.CheckAndReleaseStatus(status)
+	}
+	return ptr, nil
+}
+
 // Returns the value from the ONNXTensorElementDataType C enum corresponding to
 // the type of data held by this tensor.
 func (t *Tensor[T]) DataType() ONNXTensorElementDataType { return GetOnnxTensorElementDataType[T]() }

@@ -76,6 +76,7 @@ extern "C"
         void *p_data, size_t p_data_len,
         const int64_t *shape, size_t shape_len,
         ONNXTensorElementDataType type, OrtValue **out);
+    OrtStatus *GetTensorMutableData(OrtApi *ort_api, OrtValue *value, void **out);
     OrtStatus *Run(
         OrtApi *ort_api, OrtSession *session, const OrtRunOptions *run_options,
         const char *const *input_names, const OrtValue *const *inputs, size_t input_len,
