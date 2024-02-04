@@ -124,6 +124,9 @@ func NewSessionWithONNX(sdk *ORT_SDK, onnxFile string, useGPU bool) (*Session, e
 				if err != nil {
 					return err
 				}
+				if len(n) == 0 {
+					n = []int64{1}
+				}
 
 				session.inputs = append(session.inputs, Input{
 					Name:     name,
