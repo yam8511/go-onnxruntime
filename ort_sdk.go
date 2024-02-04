@@ -128,10 +128,73 @@ func (ort *ORT_SDK) CreateSessionOptions() (*OrtSessionOptions, error) {
 	return options, nil
 }
 
-// func (ort *ORT_SDK) OrtSessionOptionsAppendExecutionProvider_CPU(options *OrtSessionOptions, arena int) error {
+func (ort *ORT_SDK) GetAvailableProviders() ([]string, error) {
+	var names **C.char
+	var count C.int
+	status := C.GetAvailableProviders(ort._Api, &names, &count)
+	if status != nil {
+		return nil, ort.CheckAndReleaseStatus(status)
+	}
+
+	providers := []string{}
+	for i := 0; i < int(count); i++ {
+		providers = append(providers, C.GoString(C.GetAvailableProvidersItem(names, C.int(i))))
+	}
+
+	status = C.ReleaseAvailableProviders(ort._Api, names, count)
+	if status != nil {
+		return nil, ort.CheckAndReleaseStatus(status)
+	}
+	return providers, nil
+}
+
+// func (ort *ORT_SDK) SessionOptionsAppendExecutionProvider_CPU(options *OrtSessionOptions, arena int) error {
 // 	status := C.OrtSessionOptionsAppendExecutionProvider_CPU(options, C.int(arena))
-// 	return ort.CheckAndReleaseStatus(status)
+// 	if status != nil {
+// 		return ort.CheckAndReleaseStatus(status)
+// 	}
+// 	return nil
 // }
+
+func (ort *ORT_SDK) SessionOptionsAppendExecutionProvider(options *OrtSessionOptions, name string) error {
+	status := C.SessionOptionsAppendExecutionProvider(ort._Api, options, C.CString(name), nil, nil, 0)
+	if status != nil {
+		return ort.CheckAndReleaseStatus(status)
+	}
+	return nil
+}
+
+func (ort *ORT_SDK) EnableMemPattern(options *OrtSessionOptions) error {
+	status := C.EnableMemPattern(ort._Api, options)
+	if status != nil {
+		return ort.CheckAndReleaseStatus(status)
+	}
+	return nil
+}
+
+func (ort *ORT_SDK) DisableMemPattern(options *OrtSessionOptions) error {
+	status := C.DisableMemPattern(ort._Api, options)
+	if status != nil {
+		return ort.CheckAndReleaseStatus(status)
+	}
+	return nil
+}
+
+func (ort *ORT_SDK) EnableCpuMemArena(options *OrtSessionOptions) error {
+	status := C.EnableCpuMemArena(ort._Api, options)
+	if status != nil {
+		return ort.CheckAndReleaseStatus(status)
+	}
+	return nil
+}
+
+func (ort *ORT_SDK) DisableCpuMemArena(options *OrtSessionOptions) error {
+	status := C.DisableCpuMemArena(ort._Api, options)
+	if status != nil {
+		return ort.CheckAndReleaseStatus(status)
+	}
+	return nil
+}
 
 func (ort *ORT_SDK) CreateCUDAProviderOptions() (*OrtCUDAProviderOptionsV2, error) {
 	var options *OrtCUDAProviderOptionsV2
@@ -396,6 +459,10 @@ func (ort *ORT_SDK) ReleaseOp(object *OrtOp) {
 
 func (ort *ORT_SDK) ReleaseKernelInfo(object *OrtKernelInfo) {
 	C.ReleaseKernelInfo(ort._Api, object)
+}
+
+func (ort *ORT_SDK) ReleaseCUDAProviderOptions(object *OrtCUDAProviderOptionsV2) {
+	C.ReleaseCUDAProviderOptions(ort._Api, object)
 }
 
 func (ort *ORT_SDK) CheckAndReleaseStatus(status *OrtStatus) *OrtStatusError {

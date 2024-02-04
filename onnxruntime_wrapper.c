@@ -115,6 +115,140 @@ OrtStatus *CreateSessionOptions(OrtApi *ort_api, OrtSessionOptions **options)
   return ort_api->CreateSessionOptions(options);
 }
 
+/** \brief Get the names of all available providers
+ *
+ * \note The providers in the list are not guaranteed to be usable. They may fail to load due to missing system dependencies.
+ *    For example, if the CUDA/cuDNN libraries are not installed, the CUDA provider will report an error when it is added to the session options.
+ *
+ * \param[out] out_ptr Set to a pointer to an array of null terminated strings of the available providers. The entries and the
+ *    array itself must be freed using OrtApi::ReleaseAvailableProviders
+ * \param[out] provider_length Set to the number of entries in the `out_ptr` array
+ *
+ * \snippet{doc} snippets.dox OrtStatus Return Value
+ */
+OrtStatus *GetAvailableProviders(OrtApi *ort_api, char ***out_ptr, int *provider_length)
+{
+  OrtStatusPtr status = ort_api->GetAvailableProviders(out_ptr, provider_length);
+  return status;
+}
+
+char *GetAvailableProvidersItem(char **ptr, int index)
+{
+  return (ptr)[index];
+}
+
+/** \brief Release data from OrtApi::GetAvailableProviders
+ *
+ * \param[in] ptr The `out_ptr` result from OrtApi::GetAvailableProviders.
+ * \param[in] providers_length The `provider_length` result from OrtApi::GetAvailableProviders
+ *
+ * \snippet{doc} snippets.dox OrtStatus Return Value
+ */
+OrtStatus *ReleaseAvailableProviders(OrtApi *ort_api, char **ptr, int provider_length)
+{
+  return ort_api->ReleaseAvailableProviders(ptr, provider_length);
+}
+
+/** \brief: Append execution provider to the session options.
+ * \param[in] options
+ * \param[in] provider_name - provider to add.
+ * \param[in] provider_options_keys - keys to configure the provider options
+ * \param[in] provider_options_values - values to configure the provider options
+ * \param[in] num_keys - number of keys passed in
+ *
+ * Currently supported providers:
+ *   SNPE
+ *   XNNPACK
+ *
+ * Note: If an execution provider has a dedicated SessionOptionsAppendExecutionProvider_<provider name> function
+ *       that should be used to add it.
+ *
+ * SNPE supported keys:
+ *   "runtime": SNPE runtime engine, options: "CPU", "CPU_FLOAT32", "GPU", "GPU_FLOAT32_16_HYBRID", "GPU_FLOAT16",
+ *   "DSP", "DSP_FIXED8_TF", "AIP_FIXED_TF", "AIP_FIXED8_TF".
+ *   Mapping to SNPE Runtime_t definition: CPU, CPU_FLOAT32 => zdl::DlSystem::Runtime_t::CPU;
+ *   GPU, GPU_FLOAT32_16_HYBRID => zdl::DlSystem::Runtime_t::GPU;
+ *   GPU_FLOAT16 => zdl::DlSystem::Runtime_t::GPU_FLOAT16;
+ *   DSP, DSP_FIXED8_TF => zdl::DlSystem::Runtime_t::DSP.
+ *   AIP_FIXED_TF, AIP_FIXED8_TF => zdl::DlSystem::Runtime_t::AIP_FIXED_TF.
+ *   "priority": execution priority, options: "low", "normal".
+ *   "buffer_type": ITensor or user buffers, options: "ITENSOR", user buffer with different types - "TF8", "TF16", "UINT8", "FLOAT".
+ *   "ITENSOR" -- default, ITensor which is float only.
+ *   "TF8" -- quantized model required, "FLOAT" -- for both quantized or non-quantized model
+ *   If SNPE is not available (due to a non Snpe enabled build or its dependencies not being installed), this function will fail.
+ *
+ * XNNPACK supported keys:
+ *   "intra_op_num_threads": number of thread-pool size to use for XNNPACK execution provider.
+ *      default value is 0, which means to use the session thread-pool size.
+ *
+ * \since Version 1.12.
+ */
+OrtStatus *SessionOptionsAppendExecutionProvider(
+    OrtApi *ort_api,
+    OrtSessionOptions *options,
+    const char *provider_name,
+    const char *const *provider_options_keys,
+    const char *const *provider_options_values,
+    size_t num_keys)
+{
+  return ort_api->SessionOptionsAppendExecutionProvider(options, provider_name, provider_options_keys, provider_options_values, num_keys);
+}
+
+/** \brief Enable the memory pattern optimization
+ *
+ * The idea is if the input shapes are the same, we could trace the internal memory allocation
+ * and generate a memory pattern for future request. So next time we could just do one allocation
+ * with a big chunk for all the internal memory allocation.
+ * \note Memory pattern optimization is only available when Sequential Execution mode is enabled (see OrtApi::SetSessionExecutionMode)
+ *
+ * \see OrtApi::DisableMemPattern
+ *
+ * \param[in] options
+ *
+ * \snippet{doc} snippets.dox OrtStatus Return Value
+ */
+OrtStatus *EnableMemPattern(OrtApi *ort_api, OrtSessionOptions *options)
+{
+  return ort_api->EnableMemPattern(options);
+};
+
+/** \brief Disable the memory pattern optimization
+ *
+ * \see OrtApi::EnableMemPattern
+ *
+ * \param[in] options
+ *
+ * \snippet{doc} snippets.dox OrtStatus Return Value
+ */
+OrtStatus *DisableMemPattern(OrtApi *ort_api, OrtSessionOptions *options)
+{
+  return ort_api->DisableMemPattern(options);
+};
+
+/** \brief Enable the memory arena on CPU
+ *
+ * Arena may pre-allocate memory for future usage.
+ *
+ * \param[in] options
+ *
+ * \snippet{doc} snippets.dox OrtStatus Return Value
+ */
+OrtStatus *EnableCpuMemArena(OrtApi *ort_api, OrtSessionOptions *options)
+{
+  return ort_api->EnableCpuMemArena(options);
+};
+
+/** \brief Disable the memory arena on CPU
+ *
+ * \param[in] options
+ *
+ * \snippet{doc} snippets.dox OrtStatus Return Value
+ */
+OrtStatus *DisableCpuMemArena(OrtApi *ort_api, OrtSessionOptions *options)
+{
+  return ort_api->DisableCpuMemArena(options);
+};
+
 /** \brief Create an OrtCUDAProviderOptionsV2
  *
  * \param[out] out Newly created ::OrtCUDAProviderOptionsV2. Must be released with OrtApi::ReleaseCudaProviderOptions
@@ -540,6 +674,7 @@ void ReleasePrepackedWeightsContainer(OrtApi *ort_api, OrtPrepackedWeightsContai
 void ReleaseOpAttr(OrtApi *ort_api, OrtOpAttr *object) { ort_api->ReleaseOpAttr(object); }
 void ReleaseOp(OrtApi *ort_api, OrtOp *object) { ort_api->ReleaseOp(object); }
 void ReleaseKernelInfo(OrtApi *ort_api, OrtKernelInfo *object) { ort_api->ReleaseKernelInfo(object); }
+void ReleaseCUDAProviderOptions(OrtApi *ort_api, OrtCUDAProviderOptionsV2 *object) { ort_api->ReleaseCUDAProviderOptions(object); }
 void CheckAndReleaseStatus(OrtApi *ort_api, OrtStatus *status, const char **msg, OrtErrorCode *code)
 {
   *msg = ort_api->GetErrorMessage(status);

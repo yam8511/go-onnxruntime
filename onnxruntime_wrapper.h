@@ -50,6 +50,20 @@ extern "C"
 
     /* #region SessionOptions Operation */
     OrtStatus *CreateSessionOptions(OrtApi *ort_api, OrtSessionOptions **options);
+    OrtStatus *GetAvailableProviders(OrtApi *ort_api, char ***out_ptr, int *provider_length);
+    char *GetAvailableProvidersItem(char **ptr, int index);
+    OrtStatus *ReleaseAvailableProviders(OrtApi *ort_api, char **ptr, int provider_length);
+    OrtStatus *SessionOptionsAppendExecutionProvider(
+        OrtApi *ort_api,
+        OrtSessionOptions *options,
+        const char *provider_name,
+        const char *const *provider_options_keys,
+        const char *const *provider_options_values,
+        size_t num_keys);
+    OrtStatus *EnableMemPattern(OrtApi *ort_api, OrtSessionOptions *options);
+    OrtStatus *DisableMemPattern(OrtApi *ort_api, OrtSessionOptions *options);
+    OrtStatus *EnableCpuMemArena(OrtApi *ort_api, OrtSessionOptions *options);
+    OrtStatus *DisableCpuMemArena(OrtApi *ort_api, OrtSessionOptions *options);
     OrtStatus *CreateCUDAProviderOptions(OrtApi *ort_api, OrtCUDAProviderOptionsV2 **out);
     OrtStatus *UpdateCUDAProviderOptions(OrtApi *ort_api, OrtCUDAProviderOptionsV2 *cuda_options, const char *const *provider_options_keys, const char *const *provider_options_values, size_t num_keys);
     OrtStatus *SessionOptionsAppendExecutionProvider_CUDA_V2(OrtApi *ort_api, OrtSessionOptions *options, const OrtCUDAProviderOptionsV2 *cuda_options);
@@ -110,6 +124,7 @@ extern "C"
     void ReleaseOpAttr(OrtApi *ort_api, OrtOpAttr *object);
     void ReleaseOp(OrtApi *ort_api, OrtOp *object);
     void ReleaseKernelInfo(OrtApi *ort_api, OrtKernelInfo *object);
+    void ReleaseCUDAProviderOptions(OrtApi *ort_api, OrtCUDAProviderOptionsV2 *object);
     void CheckAndReleaseStatus(OrtApi *ort_api, OrtStatus *status, const char **msg, OrtErrorCode *code);
     /* #endregion */
 

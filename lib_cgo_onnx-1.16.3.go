@@ -1,9 +1,9 @@
-//go:build !onnxenv
-// +build !onnxenv
+//go:build onnx_1.16.3
+// +build onnx_1.16.3
 
 package ort
 
-// #cgo windows CFLAGS: -O2 -g -I ${SRCDIR}/include-1.14.1
+// #cgo windows CFLAGS: -O2 -g -I ${SRCDIR}/include-1.16.3
 // #cgo !windows CFLAGS: -O2 -g -I /usr/local/onnxruntime/include
 // #cgo !windows LDFLAGS: -O2 -g -L /usr/local/onnxruntime/lib -lonnxruntime
 // #include "onnxruntime_wrapper.h"

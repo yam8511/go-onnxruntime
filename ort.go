@@ -2,6 +2,7 @@ package ort
 
 import (
 	"fmt"
+	"log"
 	"os"
 )
 
@@ -54,32 +55,63 @@ func NewSessionWithONNX(sdk *ORT_SDK, onnxFile string, useGPU bool) (*Session, e
 	if err != nil {
 		return nil, err
 	}
+	defer sdk.ReleaseSessionOptions(options)
+
+	providers, err := sdk.GetAvailableProviders()
+	if err != nil {
+		return nil, err
+	}
+
+	// for i, v := range providers {
+	// 	fmt.Println(i+1, "=>", v)
+	// }
+
 	if useGPU {
-		cuda_options, err := sdk.CreateCUDAProviderOptions()
-		if err != nil {
-			return nil, err
+		cudaAvailable := false
+		for _, provider := range providers {
+			if provider == "CUDAExecutionProvider" {
+				cudaAvailable = true
+				break
+			}
 		}
-		// err = sdk.UpdateCUDAProviderOptions(cuda_options, OrtCUDAProviderOptions{
-		// 	DeviceID:    0,
-		// 	GpuMemLimit: math.MaxUint,
-		// 	// has_user_compute_stream		_Ctype_int
-		// 	// user_compute_stream		unsafe.Pointer
-		// 	// default_memory_arena_cfg	*_Ctype_struct_OrtArenaCfg
-		// 	// tunable_op_enable		_Ctype_int
-		// 	// tunable_op_tuning_enable	_Ctype_int
-		// })
-		// if err != nil {
-		// 	return nil, err
-		// }
-		err = sdk.SessionOptionsAppendExecutionProvider_CUDA_V2(options, cuda_options)
-		if err != nil {
-			return nil, err
+
+		if cudaAvailable {
+			fmt.Println("use CUDAExecutionProvider")
+			cuda_options, err := sdk.CreateCUDAProviderOptions()
+			if err != nil {
+				return nil, err
+			}
+			// err = sdk.UpdateCUDAProviderOptions(cuda_options, OrtCUDAProviderOptions{
+			// 	DeviceID:    0,
+			// 	GpuMemLimit: math.MaxUint,
+			// 	// has_user_compute_stream		_Ctype_int
+			// 	// user_compute_stream		unsafe.Pointer
+			// 	// default_memory_arena_cfg	*_Ctype_struct_OrtArenaCfg
+			// 	// tunable_op_enable		_Ctype_int
+			// 	// tunable_op_tuning_enable	_Ctype_int
+			// })
+			// if err != nil {
+			// 	return nil, err
+			// }
+			err = sdk.SessionOptionsAppendExecutionProvider_CUDA_V2(options, cuda_options)
+			sdk.ReleaseCUDAProviderOptions(cuda_options)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			log.Println("[warning] CUDAExecutionProvider not available.")
 		}
+	} else {
+		fmt.Println("only use CPUExecutionProvider")
+	}
+
+	err = sdk.DisableMemPattern(options)
+	if err != nil {
+		return nil, err
 	}
 
 	{ // 建立 Session
 		session.session_ptr, err = sdk.CreateSessionFromArray(onnxBytes, options)
-		sdk.ReleaseSessionOptions(options)
 		if err != nil {
 			return nil, err
 		}
