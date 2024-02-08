@@ -249,6 +249,62 @@ func (ort *ORT_SDK) CreateSessionFromArray(onnxBytes []byte, opt *OrtSessionOpti
 	return session, nil
 }
 
+func (ort *ORT_SDK) SessionGetModelMetadata(session *OrtSession) (*OrtModelMetadata, error) {
+	var metadata *OrtModelMetadata
+	status := C.SessionGetModelMetadata(ort._Api, session, &metadata)
+	if status != nil {
+		return nil, ort.CheckAndReleaseStatus(status)
+	}
+	return metadata, nil
+}
+
+func (ort *ORT_SDK) ModelMetadataGetProducerName(metadata *OrtModelMetadata) (string, error) {
+	var value *C.char
+	status := C.ModelMetadataGetProducerName(ort._Api, metadata, ort._AllocatorPtr, &value)
+	if status != nil {
+		return "", ort.CheckAndReleaseStatus(status)
+	}
+	return C.GoString(value), nil
+}
+
+func (ort *ORT_SDK) ModelMetadataGetGraphName(metadata *OrtModelMetadata) (string, error) {
+	var value *C.char
+	status := C.ModelMetadataGetGraphName(ort._Api, metadata, ort._AllocatorPtr, &value)
+	if status != nil {
+		return "", ort.CheckAndReleaseStatus(status)
+	}
+	return C.GoString(value), nil
+}
+
+func (ort *ORT_SDK) ModelMetadataGetDomain(metadata *OrtModelMetadata) (string, error) {
+	var value *C.char
+	status := C.ModelMetadataGetDomain(ort._Api, metadata, ort._AllocatorPtr, &value)
+	if status != nil {
+		return "", ort.CheckAndReleaseStatus(status)
+	}
+	return C.GoString(value), nil
+}
+
+func (ort *ORT_SDK) ModelMetadataGetDescription(metadata *OrtModelMetadata) (string, error) {
+	var value *C.char
+	status := C.ModelMetadataGetDescription(ort._Api, metadata, ort._AllocatorPtr, &value)
+	if status != nil {
+		return "", ort.CheckAndReleaseStatus(status)
+	}
+	return C.GoString(value), nil
+}
+
+func (ort *ORT_SDK) ModelMetadataLookupCustomMetadataMap(metadata *OrtModelMetadata, key string) (string, error) {
+	ckey := C.CString(key)
+	var value *C.char
+	status := C.ModelMetadataLookupCustomMetadataMap(ort._Api, metadata, ort._AllocatorPtr, ckey, &value)
+	C.free(unsafe.Pointer(ckey))
+	if status != nil {
+		return "", ort.CheckAndReleaseStatus(status)
+	}
+	return C.GoString(value), nil
+}
+
 func (ort *ORT_SDK) SessionGetInputCount(session *OrtSession) (int, error) {
 	out := C.size_t(0)
 	status := C.SessionGetInputCount(ort._Api, session, &out)

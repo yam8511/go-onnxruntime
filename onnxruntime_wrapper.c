@@ -356,6 +356,101 @@ OrtStatus *CreateSession(
   return ort_api->CreateSession(env, model_path, options, out);
 }
 
+/** \brief Get ::OrtModelMetadata from an ::OrtSession
+ *
+ * \param[in] session
+ * \param[out] out Newly created ::OrtModelMetadata. Must be freed using OrtApi::ReleaseModelMetadata
+ *
+ * \snippet{doc} snippets.dox OrtStatus Return Value
+ */
+OrtStatus *SessionGetModelMetadata(OrtApi *ort_api, OrtSession *session, OrtModelMetadata **metadata)
+{
+  return ort_api->SessionGetModelMetadata(session, metadata);
+}
+
+/** \brief Get `producer name` from an ::OrtModelMetadata
+ *
+ * \param[in] model_metadata
+ * \param[in] allocator
+ * \param[out] value Set to a null terminated string allocated using `allocator`. Must be freed using `allocator`
+ *
+ * \snippet{doc} snippets.dox OrtStatus Return Value
+ */
+OrtStatus *ModelMetadataGetProducerName(OrtApi *ort_api, OrtModelMetadata *metadata, OrtAllocator *allocator, char **value)
+{
+  return ort_api->ModelMetadataGetProducerName(metadata, allocator, value);
+}
+
+/** \brief Get `graph name` from an ::OrtModelMetadata
+ *
+ * \param[in] model_metadata
+ * \param[in] allocator
+ * \param[out] value Set to a null terminated string allocated using `allocator`. Must be freed using `allocator`
+ *
+ * \snippet{doc} snippets.dox OrtStatus Return Value
+ */
+OrtStatus *ModelMetadataGetGraphName(OrtApi *ort_api, OrtModelMetadata *metadata, OrtAllocator *allocator, char **value)
+{
+  return ort_api->ModelMetadataGetGraphName(metadata, allocator, value);
+}
+
+/** \brief Get `domain` from an ::OrtModelMetadata
+ *
+ * \param[in] model_metadata
+ * \param[in] allocator
+ * \param[out] value Set to a null terminated string allocated using `allocator`. Must be freed using `allocator`
+ *
+ * \snippet{doc} snippets.dox OrtStatus Return Value
+ */
+OrtStatus *ModelMetadataGetDomain(OrtApi *ort_api, OrtModelMetadata *metadata, OrtAllocator *allocator, char **value)
+{
+  return ort_api->ModelMetadataGetDomain(metadata, allocator, value);
+}
+
+/** \brief Get `description` from an ::OrtModelMetadata
+ *
+ * \param[in] model_metadata
+ * \param[in] allocator
+ * \param[out] value Set to a null terminated string allocated using `allocator`. Must be freed using `allocator`
+ *
+ * \snippet{doc} snippets.dox OrtStatus Return Value
+ */
+OrtStatus *ModelMetadataGetDescription(OrtApi *ort_api, OrtModelMetadata *metadata, OrtAllocator *allocator, char **value)
+{
+  return ort_api->ModelMetadataGetDescription(metadata, allocator, value);
+}
+
+/** \brief Return data for a key in the custom metadata map in an ::OrtModelMetadata
+ *
+ * \param[in] model_metadata
+ * \param[in] allocator
+ * \param[in] key Null terminated string
+ * \param[out] value Set to a null terminated string allocated using `allocator`. Must be freed using `allocator`
+ * `value` will be set to nullptr if the given key is not found in the custom metadata map.
+ *
+ * \snippet{doc} snippets.dox OrtStatus Return Value
+ */
+OrtStatus *ModelMetadataLookupCustomMetadataMap(
+    OrtApi *ort_api,
+    OrtModelMetadata *metadata,
+    OrtAllocator *allocator,
+    char *key, char **value)
+{
+  return ort_api->ModelMetadataLookupCustomMetadataMap(metadata, allocator, key, value);
+}
+
+/** \brief Get version number from an ::OrtModelMetadata
+ *
+ * \param[in] model_metadata
+ * \param[out] value Set to the version number
+ *
+ * \snippet{doc} snippets.dox OrtStatus Return Value
+ */
+OrtStatus *ModelMetadataGetVersion(OrtApi *ort_api, OrtModelMetadata *metadata, int64_t *value)
+{
+  return ort_api->ModelMetadataGetVersion(metadata, value);
+}
+
 /** \brief Get input count for a session
  *
  * This number must also match the number of inputs passed to OrtApi::Run

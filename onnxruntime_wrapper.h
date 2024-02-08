@@ -75,6 +75,17 @@ extern "C"
         OrtApi *ort_api,
         const OrtEnv *env, const ORTCHAR_T *model_path,
         const OrtSessionOptions *options, OrtSession **out);
+    OrtStatus *SessionGetModelMetadata(OrtApi *ort_api, OrtSession *session, OrtModelMetadata **metadata);
+    OrtStatus *ModelMetadataGetProducerName(OrtApi *ort_api, OrtModelMetadata *metadata, OrtAllocator *allocator, char **value);
+    OrtStatus *ModelMetadataGetGraphName(OrtApi *ort_api, OrtModelMetadata *metadata, OrtAllocator *allocator, char **value);
+    OrtStatus *ModelMetadataGetDomain(OrtApi *ort_api, OrtModelMetadata *metadata, OrtAllocator *allocator, char **value);
+    OrtStatus *ModelMetadataGetDescription(OrtApi *ort_api, OrtModelMetadata *metadata, OrtAllocator *allocator, char **value);
+    OrtStatus *ModelMetadataLookupCustomMetadataMap(
+        OrtApi *ort_api,
+        OrtModelMetadata *metadata,
+        OrtAllocator *allocator,
+        char *key, char **value);
+    OrtStatus *ModelMetadataGetVersion(OrtApi *ort_api, OrtModelMetadata *metadata, int64_t *value);
     OrtStatus *SessionGetInputCount(OrtApi *ort_api, OrtSession *session, size_t *out);
     OrtStatus *SessionGetInputName(OrtApi *ort_api, OrtSession *session, size_t index, OrtAllocator *allocator, char **value);
     OrtStatus *SessionGetInputTypeInfo(OrtApi *ort_api, OrtSession *session, size_t index, OrtTypeInfo **type_info);

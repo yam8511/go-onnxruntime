@@ -33,8 +33,9 @@ func (output Output) String() string {
 }
 
 type Session struct {
-	sdk         *ORT_SDK
-	session_ptr *OrtSession
+	sdk          *ORT_SDK
+	session_ptr  *OrtSession
+	metadata_ptr *OrtModelMetadata
 	// allocator_ptr *OrtAllocator
 	// mem_ptr       *OrtMemoryInfo
 	inputs        []Input  // ONNX's inputs
@@ -112,6 +113,13 @@ func NewSessionWithONNX(sdk *ORT_SDK, onnxFile string, useGPU bool) (*Session, e
 
 	{ // 建立 Session
 		session.session_ptr, err = sdk.CreateSessionFromArray(onnxBytes, options)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	{ // 撈取 metadata
+		session.metadata_ptr, err = sdk.SessionGetModelMetadata(session.session_ptr)
 		if err != nil {
 			return nil, err
 		}
@@ -227,6 +235,10 @@ func NewSessionWithONNX(sdk *ORT_SDK, onnxFile string, useGPU bool) (*Session, e
 	}
 
 	return session, nil
+}
+
+func (sess *Session) Metadata(key string) (string, error) {
+	return sess.sdk.ModelMetadataLookupCustomMetadataMap(sess.metadata_ptr, key)
 }
 
 func (sess *Session) Outputs() []Output {
