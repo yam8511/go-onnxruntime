@@ -66,6 +66,7 @@ extern "C"
     OrtStatus *DisableCpuMemArena(OrtApi *ort_api, OrtSessionOptions *options);
     OrtStatus *CreateCUDAProviderOptions(OrtApi *ort_api, OrtCUDAProviderOptionsV2 **out);
     OrtStatus *UpdateCUDAProviderOptions(OrtApi *ort_api, OrtCUDAProviderOptionsV2 *cuda_options, const char *const *provider_options_keys, const char *const *provider_options_values, size_t num_keys);
+    OrtStatus *UpdateCUDAProviderOptions_DeviceID(OrtApi *ort_api, OrtCUDAProviderOptionsV2 *cuda_options, const char *device_id);
     OrtStatus *SessionOptionsAppendExecutionProvider_CUDA_V2(OrtApi *ort_api, OrtSessionOptions *options, const OrtCUDAProviderOptionsV2 *cuda_options);
     /* #endregion */
 

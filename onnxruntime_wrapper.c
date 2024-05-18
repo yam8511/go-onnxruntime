@@ -288,6 +288,13 @@ OrtStatus *UpdateCUDAProviderOptions(OrtApi *ort_api, OrtCUDAProviderOptionsV2 *
       num_keys);
 }
 
+OrtStatus *UpdateCUDAProviderOptions_DeviceID(OrtApi *ort_api, OrtCUDAProviderOptionsV2 *cuda_options, const char *device_id)
+{
+  const char *keys[] = {"device_id"};
+  const char *values[] = {device_id};
+  return ort_api->UpdateCUDAProviderOptions(cuda_options, keys, values, 1);
+}
+
 /** \brief Append CUDA execution provider to the session options
  *
  * If CUDA is not available (due to a non CUDA enabled build), this function will return failure.

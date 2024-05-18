@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 )
 
 type Input struct {
@@ -44,7 +45,7 @@ type Session struct {
 	outputsTensor []*OrtValue
 }
 
-func NewSessionWithONNX(sdk *ORT_SDK, onnxFile string, useGPU bool) (*Session, error) {
+func NewSessionWithONNX(sdk *ORT_SDK, onnxFile string, useGPU bool, deviceIDs ...int) (*Session, error) {
 	onnxBytes, err := os.ReadFile(onnxFile)
 	if err != nil {
 		return nil, err
@@ -63,10 +64,6 @@ func NewSessionWithONNX(sdk *ORT_SDK, onnxFile string, useGPU bool) (*Session, e
 		return nil, err
 	}
 
-	// for i, v := range providers {
-	// 	fmt.Println(i+1, "=>", v)
-	// }
-
 	if useGPU {
 		cudaAvailable := false
 		for _, provider := range providers {
@@ -77,33 +74,54 @@ func NewSessionWithONNX(sdk *ORT_SDK, onnxFile string, useGPU bool) (*Session, e
 		}
 
 		if cudaAvailable {
-			fmt.Println("use CUDAExecutionProvider")
 			cuda_options, err := sdk.CreateCUDAProviderOptions()
 			if err != nil {
 				return nil, err
 			}
-			// err = sdk.UpdateCUDAProviderOptions(cuda_options, OrtCUDAProviderOptions{
-			// 	DeviceID:    0,
-			// 	GpuMemLimit: math.MaxUint,
-			// 	// has_user_compute_stream		_Ctype_int
-			// 	// user_compute_stream		unsafe.Pointer
-			// 	// default_memory_arena_cfg	*_Ctype_struct_OrtArenaCfg
-			// 	// tunable_op_enable		_Ctype_int
-			// 	// tunable_op_tuning_enable	_Ctype_int
-			// })
-			// if err != nil {
-			// 	return nil, err
-			// }
+
+			stats, err := GPU_stats()
+			if err != nil {
+				fmt.Println("[warning] cannot get GPU stats:", err)
+				stats = []GPU_Stats{}
+			}
+
+			deviceID := -1
+			for _, id := range deviceIDs {
+				deviceID = id
+			}
+			if len(stats) > 0 {
+				sort.SliceStable(stats, func(i, j int) bool {
+					return stats[i].Free > stats[j].Free
+				})
+				for _, stat := range stats {
+					if deviceID < 0 {
+						deviceID = stat.DeviceID
+						fmt.Println("use CUDAExecutionProvider | auto use device =", deviceID, "|", stat.Name)
+						break
+					} else if stat.DeviceID == deviceID {
+						fmt.Println("use CUDAExecutionProvider | device =", deviceID, "|", stat.Name)
+						break
+					}
+				}
+			}
+
+			if deviceID >= 0 {
+				err = sdk.UpdateCUDAProviderOptions_DeviceID(cuda_options, deviceID)
+				if err != nil {
+					return nil, err
+				}
+			}
+
 			err = sdk.SessionOptionsAppendExecutionProvider_CUDA_V2(options, cuda_options)
 			sdk.ReleaseCUDAProviderOptions(cuda_options)
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			log.Println("[warning] CUDAExecutionProvider not available.")
+			log.Println("[warning] CUDAExecutionProvider not available. fallback to CPUExecutionProvider")
 		}
 	} else {
-		fmt.Println("only use CPUExecutionProvider")
+		fmt.Println("use CPUExecutionProvider")
 	}
 
 	err = sdk.DisableMemPattern(options)

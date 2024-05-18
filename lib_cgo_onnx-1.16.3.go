@@ -1,5 +1,5 @@
-//go:build onnx_1.16.3
-// +build onnx_1.16.3
+//go:build !onnx_1.14 && !onnxenv
+// +build !onnx_1.14,!onnxenv
 
 package ort
 

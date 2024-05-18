@@ -7,6 +7,7 @@ import "C"
 
 import (
 	"fmt"
+	"strconv"
 	"unsafe"
 )
 
@@ -207,6 +208,16 @@ func (ort *ORT_SDK) CreateCUDAProviderOptions() (*OrtCUDAProviderOptionsV2, erro
 
 func (ort *ORT_SDK) UpdateCUDAProviderOptions(cuda_options *OrtCUDAProviderOptionsV2, options ExecutionProviderOptions_CUDA) error {
 	status := C.UpdateCUDAProviderOptions(ort._Api, cuda_options, nil, nil, 0)
+	if status != nil {
+		return ort.CheckAndReleaseStatus(status)
+	}
+	return nil
+}
+
+func (ort *ORT_SDK) UpdateCUDAProviderOptions_DeviceID(cuda_options *OrtCUDAProviderOptionsV2, deviceID int) error {
+	id := strconv.Itoa(deviceID)
+	cid := C.CString(id)
+	status := C.UpdateCUDAProviderOptions_DeviceID(ort._Api, cuda_options, cid)
 	if status != nil {
 		return ort.CheckAndReleaseStatus(status)
 	}
