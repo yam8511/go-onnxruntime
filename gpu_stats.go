@@ -37,9 +37,9 @@ func GPU_stats() ([]GPU_Stats, error) {
 	if err != nil {
 		return nil, fmt.Errorf("parse csv of nvidia-smi error: %s:", err)
 	}
-	for i, j := 0, len(gpus)-1; i < j; i, j = i+1, j-1 {
-		gpus[i], gpus[j] = gpus[j], gpus[i]
-	}
+	// for i, j := 0, len(gpus)-1; i < j; i, j = i+1, j-1 {
+	// 	gpus[i], gpus[j] = gpus[j], gpus[i]
+	// }
 
 	stats := []GPU_Stats{}
 	id := 0
