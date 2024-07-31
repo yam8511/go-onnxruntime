@@ -247,6 +247,9 @@ func (ort *ORT_SDK) CreateCpuMemoryInfo() (*OrtMemoryInfo, error) {
 }
 
 func (ort *ORT_SDK) CreateSessionFromArray(onnxBytes []byte, opt *OrtSessionOptions) (*OrtSession, error) {
+	if len(onnxBytes) == 0 {
+		return nil, fmt.Errorf("onnx file is empty")
+	}
 	var session *OrtSession
 	status := C.CreateSessionFromArray(
 		ort._Api, ort._Env,
